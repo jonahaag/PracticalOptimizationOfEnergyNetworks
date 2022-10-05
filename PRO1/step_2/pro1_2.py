@@ -20,30 +20,31 @@ def timeseries_example(output_dir):
     net = nw.create_cigre_network_mv()
 
     # 1.1 add CS, perform N-1 analysis and plot the network
-    # np.random.seed(200)
+    np.random.seed(200)
     cs_positions = np.random.choice(15, 5, replace=False)
     net = add_cs(net, cs_positions)
-    critical = contigency_analysis(net, vmax=1.05, vmin=0.95, max_ll=100.)
-    critical_loose = contigency_analysis(net, vmax=1.1, vmin=0.9, max_ll=100.)
-    plot_network(net, critical)
+    switch_positions = pd.read_excel("contigency_switch_positions.xlsx")
+    # critical = contigency_analysis(net, switch_positions, vmax=1.05, vmin=0.95, max_ll=100.)
+    # plot_network(net, critical)
+    critical_loose = contigency_analysis(net, switch_positions, vmax=1.1, vmin=0.9, max_ll=100.)
     plot_network(net, critical_loose)
     # TODO add iterating over random choices and picking the "best" positions
 
-    # # 2. create (random) data source
-    # n_timesteps = 24
-    # profiles, ds = create_data_source(net, n_timesteps)
+    # 2. create (random) data source
+    n_timesteps = 24
+    profiles, ds = create_data_source(net, n_timesteps)
 
-    # # 3. create controllers (to control P values of the load and the sgen)
-    # create_controllers(net, ds)
+    # 3. create controllers (to control P values of the load and the sgen)
+    create_controllers(net, ds)
 
-    # # time steps to be calculated. Could also be a list with non-consecutive time steps
-    # time_steps = range(0, n_timesteps)
+    # time steps to be calculated. Could also be a list with non-consecutive time steps
+    time_steps = range(0, n_timesteps)
 
-    # # 4. the output writer with the desired results to be stored to files.
-    # ow = create_output_writer(net, time_steps, output_dir=output_dir)
+    # 4. the output writer with the desired results to be stored to files.
+    ow = create_output_writer(net, time_steps, output_dir=output_dir)
 
-    # # 5. the main time series function
-    # run_timeseries(net, time_steps)
+    # 5. the main time series function
+    run_timeseries(net, time_steps)
 
 def add_cs(net, cs_positions):
     i = 1
@@ -52,9 +53,8 @@ def add_cs(net, cs_positions):
         name = "Bus CS "+str(i)
         name_2 = "CS "+str(i)
         pp.create_bus(net, name=name, vn_kv=0.4, type="b", geodata=(geodata))
-        pp.create_transformer(net, hv_bus=cs, lv_bus=pp.get_element_index(net, "bus", name), name=name_2, std_type="0.25 MVA 20/0.4 kV")
+        pp.create_transformer(net, hv_bus=cs, lv_bus=pp.get_element_index(net, "bus", name), name=name_2, std_type="0.25 MVA 20/0.4 kV") # 0.4 MVA 20/0.4 kV, 0.63 MVA 20/0.4 kV
         i += 1
-
     return net
 
 def plot_network(net, critical=[]):
@@ -64,18 +64,23 @@ def plot_network(net, critical=[]):
     pplt.draw_collections([clc], ax=ax)
     plt.show()
 
-def contigency_analysis(net, vmax, vmin, max_ll):
+def contigency_analysis(net, switch_positions, vmax, vmin, max_ll):
     lines = net.line.index
     critical = list()
-
     for l in lines:
         net.line.loc[l, "in_service"] = False
+        # S1 is 4, S2 is 1, S3 is 2
+        net.switch.loc[4, "closed"] = switch_positions.loc[l, "S1"]
+        net.switch.loc[1, "closed"] = switch_positions.loc[l, "S2"]
+        net.switch.loc[2, "closed"] = switch_positions.loc[l, "S3"]
         pp.runpp(net)
-
+        print(f"Line {l}, max voltage {net.res_bus.vm_pu.max()}, min voltage {net.res_bus.vm_pu.min()}, max line loading {net.res_line.loading_percent.max()}")
         if net.res_bus.vm_pu.max() > vmax or net.res_bus.vm_pu.min() < vmin or net.res_line.loading_percent.max() > max_ll:
             critical.append(l)
         net.line.loc[l, "in_service"] = True
-
+    net.switch.loc[4, "closed"] = False
+    net.switch.loc[1, "closed"] = False
+    net.switch.loc[2, "closed"] = False
     return critical
 
 def create_data_source(net, n_timesteps=24):
@@ -112,7 +117,7 @@ def create_output_writer(net, time_steps, output_dir):
     ow.log_variable('res_line', 'i_ka')
     return ow
 
-output_dir = os.path.join(tempfile.gettempdir(), "time_series_example")
+output_dir = os.path.join(os.getcwd(), "time_series_example")
 print("Results can be found in your local temp folder: {}".format(output_dir))
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
