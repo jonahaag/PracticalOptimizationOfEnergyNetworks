@@ -19,13 +19,16 @@ def timeseries_example(output_dir):
     # 1. create test net
     net = nw.create_cigre_network_mv()
 
-    # 1.1 add CS and plot the network
+    # 1.1 add CS, perform N-1 analysis and plot the network
     np.random.seed(200)
     cs_positions = np.random.choice(15, 5, replace=False)
     net = add_cs(net, cs_positions)
-    plot_network(net)
+    switch_positions = pd.read_excel("contigency_switch_positions.xlsx")
+    # critical = contigency_analysis(net, switch_positions, vmax=1.05, vmin=0.95, max_ll=100.)
+    # plot_network(net, critical)
+    critical_loose = contigency_analysis(net, switch_positions, vmax=1.1, vmin=0.9, max_ll=100.)
+    plot_network(net, critical_loose)
     # # TODO add iterating over random choices and picking the "best" positions
-    # TODO add loadshape plot
 
     # 2. create (random) data source
     n_timesteps = 24
