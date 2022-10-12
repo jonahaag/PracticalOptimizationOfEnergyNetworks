@@ -25,9 +25,11 @@ def timeseries(file_dir, output_dir):
 
     # ev_profiles = pd.read_excel(os.path.join(file_dir, "PEV-Profiles-L2.xlsx"), sheet_name="PEV-Profiles-L2.csv", skiprows=2, nrows=2)
     ev_profiles = pd.read_excel(os.path.join(file_dir, "ev_loads_one_day.xlsx"), skiprows=2)
-    ev_idx = np.array([1])
-
-    allocation = np.array([5])
+    
+    # each tuple is (ev_idx, cs_idx) where ev_idx is in range(1,348), cs_idx in range (1,5)
+    ev_allocation = [(2,3), (17, 5), (18,4), (30,2), (101,4), (170, 5)]
+    ev_idx = np.array([i[0] for i in ev_allocation])
+    allocation = np.array([i[1] for i in ev_allocation])
     assert np.size(ev_idx) == np.size(allocation)
 
     net, loadshape_cs = add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation)
@@ -36,7 +38,7 @@ def timeseries(file_dir, output_dir):
 
     # 2. create data source based on nominal loadshape
     n_timesteps = 24
-    profiles, ds = create_data_source(net, loadshape_cs, n_timesteps)
+    profiles, ds = create_data_source(net, loadshape_cs)
 
     # 3. create controllers
     create_controllers(net, ds)
@@ -56,7 +58,7 @@ def add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation):
     loadshape_cs = np.zeros((24,5))
     for j, ev in enumerate(ev_idx):
         ev_profile_detailed = ev_profiles["Vehicle "+str(ev)]
-        loadshape_ev[:, j] = np.array([max(ev_profile_detailed[i*6:i*6+6]) for i in range(24)])/1000. #TODO maybe outsource and preprocess the excel files
+        loadshape_ev[:, j] = np.array([max(ev_profile_detailed[i*6:i*6+6]) for i in range(24)])/1e6 #TODO maybe outsource and preprocess the excel files
         loadshape_cs[:,allocation[j]-1] += loadshape_ev[:,j]
     # Add a low voltage bus, transformer and connected load for the 5 CS add the high voltage buses specified in cs_positions
     for i, cs in enumerate(cs_positions):
@@ -95,7 +97,7 @@ def contigency_analysis(net, switch_positions, vmax, vmin, max_ll):
     net.switch.loc[2, "closed"] = False
     return critical
 
-def create_data_source(net, loadshape_cs, n_timesteps=24):
+def create_data_source(net, loadshape_cs):
     # Reshape the reactive and active power of the existing loads to row vectors
     # 18 predefined loads
     p_mw_existing = np.array(net.load.p_mw)[0:18].reshape((1,18))
@@ -107,7 +109,7 @@ def create_data_source(net, loadshape_cs, n_timesteps=24):
     loadshape_q_mvar_existing = np.multiply(loadshape_nominal, q_mvar_existing)
     # Merge the two arrays (preexisting loads + new EV loads), results is a 24 x 23 matrix 
     loadshape_p_mw = np.concatenate((loadshape_p_mw_existing, loadshape_cs), axis=1)
-    loadshape_q_mvar = np.concatenate((loadshape_p_mw_existing, np.zeros_like(loadshape_cs)), axis=1)
+    loadshape_q_mvar = np.concatenate((loadshape_q_mvar_existing, np.zeros_like(loadshape_cs)), axis=1)
     # e.g. to access loadshape of load 0 use loadshape_p_mw[:,0]
     assert np.shape(loadshape_p_mw) == (24,23)
     assert np.shape(loadshape_q_mvar) == (24,23)
@@ -117,7 +119,6 @@ def create_data_source(net, loadshape_cs, n_timesteps=24):
     for id, l in net.load.iterrows():
         profiles[l["name"]+"_p_mw"] = loadshape_p_mw[:,id]
         profiles[l["name"]+"_q_mvar"] = loadshape_q_mvar[:,id]
-    print(profiles)
     ds = DFData(profiles)
 
     return profiles, ds
