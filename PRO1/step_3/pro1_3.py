@@ -14,7 +14,7 @@ import os
 # This code is mainly based on https://github.com/e2nIEE/pandapower/blob/develop/tutorials/time_series.ipynb
 ###############
 
-def timeseries(output_dir):
+def timeseries(file_dir, output_dir):
     # 1. create test net
     net = nw.create_cigre_network_mv()
 
@@ -24,23 +24,30 @@ def timeseries(output_dir):
     # Alternative: cs_positions = [1, 3, 7, 10, 13] simply giving the index of the buses
     net = add_cs(net, cs_positions)
     # Plot the updated network, including charging stations
-    plot_network(net)
+    # plot_network(net)
 
-    # 2. create data source based on nominal loadshape
-    n_timesteps = 24
-    profiles, ds = create_data_source(net, n_timesteps)
+    # 1.2 add EV as load
+    # ev_profiles = pd.read_excel(os.path.join(file_dir, "PEV-Profiles-L2.xlsx"), sheet_name="PEV-Profiles-L2.csv", skiprows=2, nrows=2)
+    ev_profiles = pd.read_excel(os.path.join(file_dir, "ev_loads_one_day.xlsx"), skiprows=2)
+    ev_idx = [2]
+    ev_loadshapes = add_ev(net, ev_profiles, ev_idx)
+    print(net.bus)
 
-    # 3. create controllers
-    create_controllers(net, ds)
+    # # 2. create data source based on nominal loadshape
+    # n_timesteps = 24
+    # profiles, ds = create_data_source(net, n_timesteps)
 
-    # time steps to be calculated. Could also be a list with non-consecutive time steps
-    time_steps = range(0, n_timesteps)
+    # # 3. create controllers
+    # create_controllers(net, ds)
 
-    # 4. the output writer with the desired results to be stored to files.
-    ow = create_output_writer(net, time_steps, output_dir=output_dir)
+    # # time steps to be calculated. Could also be a list with non-consecutive time steps
+    # time_steps = range(0, n_timesteps)
 
-    # 5. the main time series function
-    run_timeseries(net, time_steps)
+    # # 4. the output writer with the desired results to be stored to files.
+    # ow = create_output_writer(net, time_steps, output_dir=output_dir)
+
+    # # 5. the main time series function
+    # run_timeseries(net, time_steps)
 
 def add_cs(net, cs_positions):
     i = 1
@@ -52,6 +59,19 @@ def add_cs(net, cs_positions):
         pp.create_transformer(net, hv_bus=cs, lv_bus=pp.get_element_index(net, "bus", name), name=name_2, std_type="0.25 MVA 20/0.4 kV") # 0.4 MVA 20/0.4 kV, 0.63 MVA 20/0.4 kV
         i += 1
     return net
+
+def add_ev(ev_profiles, ev_idx):
+    ev_loadshapes = np.zeros((24,len(ev_idx)))
+    j = 0
+    for ev in ev_idx:
+        ev_profile_detailed = ev_profiles["Vehicle "+str(ev)]
+        ev_loadshapes[:, j] = [max(ev_profile_detailed[i*6:i*6+6]) for i in range(24)]
+        j += 1
+    return ev_loadshapes
+
+def allocate_ev(ev_loadshapes, allocation):
+    # ev_loadshapes is a 24 x N_evs numpy array containing the load for all electric vehicles to be added
+    # allocation is N_evs x 1 array/list containing the allocation of each EV to a CS 
 
 def plot_network(net, critical=[]):
     # Plot the network
@@ -79,7 +99,7 @@ def contigency_analysis(net, switch_positions, vmax, vmin, max_ll):
     net.switch.loc[2, "closed"] = False
     return critical
 
-def create_data_source(net, n_timesteps=24):
+def create_data_source(net, ev_profiles, n_timesteps=24):
     # Reshape the reactive and active power of the existing loads to row vectors
     p_mw = np.array(net.load.p_mw).reshape((1,18))
     q_mvar = np.array(net.load.q_mvar).reshape((1,18))
@@ -105,7 +125,7 @@ def create_controllers(net, ds):
         ConstControl(net, element='load', variable='p_mw', element_index=[i],
                  data_source=ds, profile_name=[l["name"]+"_p_mw"])
         ConstControl(net, element='load', variable='q_mvar', element_index=[i],
-                 data_source=ds, profile_name=[l["name"]+"_p_mw"])
+                 data_source=ds, profile_name=[l["name"]+"_q_mvar"])
 
 def create_output_writer(net, time_steps, output_dir):
     ow = OutputWriter(net, time_steps, output_path=output_dir, output_file_type=".xlsx", log_variables=list())
@@ -119,8 +139,9 @@ def create_output_writer(net, time_steps, output_dir):
 
 if __name__ == "__main__":
     # Set directory to store results
-    output_dir = os.path.join(os.getcwd(), "time_series_example")
+    file_dir = os.path.dirname(os.path.realpath(__file__))
+    output_dir = os.path.join(file_dir, "time_series_example")
     print("Results can be found in your local temp folder: {}".format(output_dir))
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    timeseries(output_dir)
+    timeseries(file_dir, output_dir)
