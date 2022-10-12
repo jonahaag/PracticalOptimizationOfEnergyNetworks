@@ -60,25 +60,6 @@ def plot_network(net, critical=[]):
     pplt.draw_collections([clc], ax=ax)
     plt.show()
 
-def contigency_analysis(net, switch_positions, vmax, vmin, max_ll):
-    lines = net.line.index
-    critical = list()
-    for l in lines:
-        net.line.loc[l, "in_service"] = False
-        # S1 is 4, S2 is 1, S3 is 2
-        net.switch.loc[4, "closed"] = switch_positions.loc[l, "S1"]
-        net.switch.loc[1, "closed"] = switch_positions.loc[l, "S2"]
-        net.switch.loc[2, "closed"] = switch_positions.loc[l, "S3"]
-        pp.runpp(net)
-        print(f"Line {l}, max voltage {net.res_bus.vm_pu.max()}, min voltage {net.res_bus.vm_pu.min()}, max line loading {net.res_line.loading_percent.max()}")
-        if net.res_bus.vm_pu.max() > vmax or net.res_bus.vm_pu.min() < vmin or net.res_line.loading_percent.max() > max_ll:
-            critical.append(l)
-        net.line.loc[l, "in_service"] = True
-    net.switch.loc[4, "closed"] = False
-    net.switch.loc[1, "closed"] = False
-    net.switch.loc[2, "closed"] = False
-    return critical
-
 def create_data_source(net, n_timesteps=24):
     # Reshape the reactive and active power of the existing loads to row vectors
     p_mw = np.array(net.load.p_mw).reshape((1,18))
@@ -105,7 +86,7 @@ def create_controllers(net, ds):
         ConstControl(net, element='load', variable='p_mw', element_index=[i],
                  data_source=ds, profile_name=[l["name"]+"_p_mw"])
         ConstControl(net, element='load', variable='q_mvar', element_index=[i],
-                 data_source=ds, profile_name=[l["name"]+"_p_mw"])
+                 data_source=ds, profile_name=[l["name"]+"_q_mvar"])
 
 def create_output_writer(net, time_steps, output_dir):
     ow = OutputWriter(net, time_steps, output_path=output_dir, output_file_type=".xlsx", log_variables=list())
