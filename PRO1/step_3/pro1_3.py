@@ -30,11 +30,17 @@ def timeseries(file_dir, output_dir):
     ev_profiles = np.loadtxt(os.path.join(file_dir, "profiles/peak_day.txt"))
     
     # each tuple is (ev_idx, cs_idx) where ev_idx is in range(1,348), cs_idx in range (1,5)
-    # TODO add allocation as csv file, stochastic approach
-    ev_allocation = [(2,3), (17, 5), (18,4), (30,2), (101,4), (170, 5)]
-    ev_idx = np.array([i[0] for i in ev_allocation])
-    allocation = np.array([i[1] for i in ev_allocation])
-    assert np.size(ev_idx) == np.size(allocation)
+    # ev_allocation = [(2,3), (17, 5), (18,4), (30,2), (101,4), (170, 5)]
+    # ev_idx = np.array([i[0] for i in ev_allocation])-1
+    # allocation = np.array([i[1] for i in ev_allocation])
+
+    # Alternative using random allocation:
+    n_ev = 345
+    ev_idx = np.random.choice(348, n_ev, replace=False)
+    allocation = np.repeat(np.array(range(1,6)), n_ev//5)
+    ev_allocation = [(e,c) for e,c in zip(ev_idx,allocation)]
+
+    assert ev_idx.size == allocation.size
 
     net, loadshape_cs = add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation)
     # Plot the updated network, including charging stations
@@ -65,7 +71,7 @@ def add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation):
     loadshape_ev = np.zeros((24,len(ev_idx)))
     loadshape_cs = np.zeros((24,5))
     for j, ev in enumerate(ev_idx):
-        loadshape_ev[:, j] = ev_profiles[:, ev-1]/1e6
+        loadshape_ev[:, j] = ev_profiles[:, ev]/1e6
         loadshape_cs[:,allocation[j]-1] += loadshape_ev[:,j]
     # Add a low voltage bus, transformer and connected load for the 5 CS add the high voltage buses specified in cs_positions
     for i, cs in enumerate(cs_positions):
@@ -209,7 +215,7 @@ def save_configuration(cs_positions, ev_allocation, ev_idx, allocation):
     with open("results/cs_ev_configuration.txt", 'w') as f:
         f.write(f"There were {ev_idx.size} EVs connected to the network.\n\n")
         for i in range(5):
-            f.write(f"CS{i+1} was connected to high voltage bus {cs_positions[i]}.\n{np.count_nonzero(np.where(allocation == i+1))} EVs were connected to CS {i+1}.\n\n")
+            f.write(f"CS{i+1} was connected to high voltage bus {cs_positions[i]}.\n{np.count_nonzero(allocation==i+1)} EVs were connected to CS {i+1}.\n\n")
         f.write("\nDetailed allocation:\n")
         # TODO sort this after CS
         for a in ev_allocation:
