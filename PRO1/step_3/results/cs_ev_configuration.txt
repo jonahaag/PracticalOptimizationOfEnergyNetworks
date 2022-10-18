@@ -1,0 +1,25 @@
+There were 6 EVs connected to the network.
+
+CS1 was connected to high voltage bus 8.
+0 EVs were connected to CS 1.
+
+CS2 was connected to high voltage bus 13.
+1 EVs were connected to CS 2.
+
+CS3 was connected to high voltage bus 5.
+0 EVs were connected to CS 3.
+
+CS4 was connected to high voltage bus 11.
+2 EVs were connected to CS 4.
+
+CS5 was connected to high voltage bus 3.
+2 EVs were connected to CS 5.
+
+
+Detailed allocation:
+EV 2 connected to CS 3
+EV 17 connected to CS 5
+EV 18 connected to CS 4
+EV 30 connected to CS 2
+EV 101 connected to CS 4
+EV 170 connected to CS 5

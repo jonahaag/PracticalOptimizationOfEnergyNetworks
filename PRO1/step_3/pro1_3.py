@@ -1,7 +1,9 @@
+from json import loads
 import pandapower as pp
 import pandapower.networks as nw
 import pandapower.plotting as pplt
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 import numpy as np
 import pandas as pd
 from pandapower.timeseries import DFData
@@ -24,9 +26,11 @@ def timeseries(file_dir, output_dir):
     # Alternative: cs_positions = [1, 3, 7, 10, 13] simply giving the index of the buses
 
     # ev_profiles = pd.read_excel(os.path.join(file_dir, "PEV-Profiles-L2.xlsx"), sheet_name="PEV-Profiles-L2.csv", skiprows=2, nrows=2)
-    ev_profiles = pd.read_excel(os.path.join(file_dir, "ev_loads_one_day.xlsx"), skiprows=2)
+    # ev_profiles = pd.read_excel(os.path.join(file_dir, "profiles/ev_loads_one_day.xlsx"), skiprows=2)
+    ev_profiles = np.loadtxt(os.path.join(file_dir, "profiles/peak_day.txt"))
     
     # each tuple is (ev_idx, cs_idx) where ev_idx is in range(1,348), cs_idx in range (1,5)
+    # TODO add allocation as csv file, stochastic approach
     ev_allocation = [(2,3), (17, 5), (18,4), (30,2), (101,4), (170, 5)]
     ev_idx = np.array([i[0] for i in ev_allocation])
     allocation = np.array([i[1] for i in ev_allocation])
@@ -34,7 +38,7 @@ def timeseries(file_dir, output_dir):
 
     net, loadshape_cs = add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation)
     # Plot the updated network, including charging stations
-    # plot_network(net)
+    plot_network(net)
 
     # 2. create data source based on nominal loadshape
     n_timesteps = 24
@@ -52,13 +56,16 @@ def timeseries(file_dir, output_dir):
     # 5. the main time series function
     run_timeseries(net, time_steps)
 
+    # 6. Save additional results: plots, CS positions, n_EVs, EV allocation
+    plot_results(net, time_steps)
+    save_configuration(cs_positions, ev_allocation, ev_idx, allocation)
+
 def add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation):
     # loadshape_ev is a 24 x N_evs numpy array containing the load for all electric vehicles to be added
     loadshape_ev = np.zeros((24,len(ev_idx)))
     loadshape_cs = np.zeros((24,5))
     for j, ev in enumerate(ev_idx):
-        ev_profile_detailed = ev_profiles["Vehicle "+str(ev)]
-        loadshape_ev[:, j] = np.array([max(ev_profile_detailed[i*6:i*6+6]) for i in range(24)])/1e6 #TODO maybe outsource and preprocess the excel files
+        loadshape_ev[:, j] = ev_profiles[:, ev-1]/1e6
         loadshape_cs[:,allocation[j]-1] += loadshape_ev[:,j]
     # Add a low voltage bus, transformer and connected load for the 5 CS add the high voltage buses specified in cs_positions
     for i, cs in enumerate(cs_positions):
@@ -76,7 +83,8 @@ def plot_network(net, critical=[]):
     ax = pplt.simple_plot(net, show_plot=False)
     clc = pplt.create_line_collection(net, critical, color="r", linewidth=3., use_bus_geodata=True)
     pplt.draw_collections([clc], ax=ax)
-    plt.show()
+    plt.savefig("results/network.png")
+    # plt.show()
 
 def contigency_analysis(net, switch_positions, vmax, vmin, max_ll):
     lines = net.line.index
@@ -138,12 +146,80 @@ def create_output_writer(net, time_steps, output_dir):
     ow.log_variable('res_bus', 'vm_pu')
     ow.log_variable('res_line', 'loading_percent')
     ow.log_variable('res_line', 'i_ka')
+    ow.log_variable('res_trafo', 'loading_percent')
     return ow
+
+def plot_results(net, time_steps):
+    loads = np.array(pd.read_excel('results/res_load/p_mw.xlsx'))[:,1:]
+    buses = np.array(pd.read_excel('results/res_bus/vm_pu.xlsx'))[:,1:]
+    lines = np.array(pd.read_excel('results/res_line/loading_percent.xlsx'))[:,1:]
+    trafos = np.array(pd.read_excel('results/res_trafo/loading_percent.xlsx'))[:,1:]
+    time_steps = np.array(time_steps).reshape(24,1)
+
+    fig, axs = plt.subplots(2, 2, figsize=(16,9))
+
+    plt.subplot(2,2,1)
+    plt.title("Loads")
+    plt.xlim((0,23))
+    plt.ylim((0,15))
+    plt.plot(np.repeat(time_steps, loads.shape[1], axis=1), loads)
+    plt.legend([f'Load {i}' for i in range(loads.shape[1])], ncol=2, fontsize='x-small', loc="upper left")
+    plt.grid(True, alpha=0.5)
+    plt.xlabel("Time [hour]")
+    plt.ylabel("Active power [MW]")
+
+    plt.subplot(2,2,2)
+    plt.title("Buses")
+    plt.plot(np.repeat(time_steps, buses.shape[1], axis=1), buses)
+    plt.legend([f'Bus {i}' for i in range(buses.shape[1])], ncol=3, fontsize='x-small', loc="upper left")
+    plt.plot(time_steps,1.1*np.ones(24), color='k')
+    plt.plot(time_steps,0.9*np.ones(24), color='k')
+    plt.grid(True, alpha=0.5)
+    plt.xlim((0,23))
+    plt.ylim((0.8,1.2))
+    plt.xlabel("Time [hour]")
+    plt.ylabel("Voltage [pu]")
+
+    plt.subplot(2,2,3)
+    plt.title("Lines")
+    plt.plot(np.repeat(time_steps, lines.shape[1], axis=1), lines)
+    plt.legend([f'Line {i}' for i in range(lines.shape[1])], ncol=2, fontsize='x-small', loc="upper left")
+    plt.plot(time_steps,100*np.ones(24), color='k')
+    plt.grid(True, alpha=0.5)
+    plt.xlim((0,23))
+    plt.ylim((0,110))
+    plt.xlabel("Time [hour]")
+    plt.ylabel("Loading [%]")
+
+    plt.subplot(2,2,4)
+    plt.title("Trafos")
+    plt.plot(np.repeat(time_steps, trafos.shape[1], axis=1), trafos)
+    plt.legend([f'Trafo {i}' for i in range(trafos.shape[1])], ncol=2, fontsize='x-small', loc="upper left")
+    plt.plot(time_steps,100*np.ones(24), color='k')
+    plt.grid(True, alpha=0.5)
+    plt.xlim((0,23))
+    plt.ylim((0,110))
+    plt.xlabel("Time [hour]")
+    plt.ylabel("Loading [%]")
+
+    plt.savefig("results/results.png", dpi=300)
+    plt.show()
+
+def save_configuration(cs_positions, ev_allocation, ev_idx, allocation):
+    with open("results/cs_ev_configuration.txt", 'w') as f:
+        f.write(f"There were {ev_idx.size} EVs connected to the network.\n\n")
+        for i in range(5):
+            f.write(f"CS{i+1} was connected to high voltage bus {cs_positions[i]}.\n{np.count_nonzero(np.where(allocation == i+1))} EVs were connected to CS {i+1}.\n\n")
+        f.write("\nDetailed allocation:\n")
+        # TODO sort this after CS
+        for a in ev_allocation:
+            f.write(f"EV {a[0]} connected to CS {a[1]}\n")
+        
 
 if __name__ == "__main__":
     # Set directory to store results
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    output_dir = os.path.join(file_dir, "time_series_example")
+    output_dir = os.path.join(file_dir, "results")
     print("Results can be found in your local temp folder: {}".format(output_dir))
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
