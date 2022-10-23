@@ -31,7 +31,7 @@ def timeseries(file_dir, output_dir):
     ev_profiles = np.loadtxt(os.path.join(file_dir, "profiles/peak_day.txt"))
 
     # In N-1 case:
-    contigency = False
+    contigency = True
     if contigency:
         l = 0 #10
         # Remove line
@@ -49,8 +49,8 @@ def timeseries(file_dir, output_dir):
 
     # Alternative 2: using pseudo-random allocation
     # Set number of EVs overall and per CS
-    n_ev_per_cs = np.array([30,30,30,30,30])
-    n_ev = 150
+    n_ev_per_cs = np.array([154,154,154,154,154])
+    n_ev = 770
     assert n_ev == np.sum(n_ev_per_cs)
     # Pick n_ev random profiles
     np.random.seed(100)

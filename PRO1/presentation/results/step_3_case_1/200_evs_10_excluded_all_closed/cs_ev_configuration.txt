@@ -1,0 +1,225 @@
+There were 200 EVs connected to the network.
+Peak hour was 12.
+
+CS1 was connected to high voltage bus 2.
+40 EVs were connected to CS 1.
+The maximum number of EVs charged at the same time was 14.
+
+CS2 was connected to high voltage bus 6.
+40 EVs were connected to CS 2.
+The maximum number of EVs charged at the same time was 16.
+
+CS3 was connected to high voltage bus 8.
+40 EVs were connected to CS 3.
+The maximum number of EVs charged at the same time was 11.
+
+CS4 was connected to high voltage bus 11.
+40 EVs were connected to CS 4.
+The maximum number of EVs charged at the same time was 14.
+
+CS5 was connected to high voltage bus 13.
+40 EVs were connected to CS 5.
+The maximum number of EVs charged at the same time was 14.
+
+
+Detailed allocation:
+EV 263 connected to CS 1
+EV 264 connected to CS 1
+EV 7 connected to CS 1
+EV 46 connected to CS 1
+EV 84 connected to CS 1
+EV 319 connected to CS 1
+EV 281 connected to CS 1
+EV 50 connected to CS 1
+EV 56 connected to CS 1
+EV 124 connected to CS 1
+EV 1 connected to CS 1
+EV 286 connected to CS 1
+EV 199 connected to CS 1
+EV 161 connected to CS 1
+EV 304 connected to CS 1
+EV 325 connected to CS 1
+EV 80 connected to CS 1
+EV 279 connected to CS 1
+EV 88 connected to CS 1
+EV 205 connected to CS 1
+EV 69 connected to CS 1
+EV 75 connected to CS 1
+EV 43 connected to CS 1
+EV 301 connected to CS 1
+EV 128 connected to CS 1
+EV 78 connected to CS 1
+EV 307 connected to CS 1
+EV 209 connected to CS 1
+EV 169 connected to CS 1
+EV 197 connected to CS 1
+EV 244 connected to CS 1
+EV 159 connected to CS 1
+EV 309 connected to CS 1
+EV 5 connected to CS 1
+EV 249 connected to CS 1
+EV 198 connected to CS 1
+EV 191 connected to CS 1
+EV 96 connected to CS 1
+EV 27 connected to CS 1
+EV 18 connected to CS 1
+EV 187 connected to CS 2
+EV 208 connected to CS 2
+EV 149 connected to CS 2
+EV 337 connected to CS 2
+EV 298 connected to CS 2
+EV 332 connected to CS 2
+EV 134 connected to CS 2
+EV 6 connected to CS 2
+EV 252 connected to CS 2
+EV 266 connected to CS 2
+EV 64 connected to CS 2
+EV 204 connected to CS 2
+EV 3 connected to CS 2
+EV 60 connected to CS 2
+EV 120 connected to CS 2
+EV 213 connected to CS 2
+EV 21 connected to CS 2
+EV 344 connected to CS 2
+EV 326 connected to CS 2
+EV 110 connected to CS 2
+EV 232 connected to CS 2
+EV 300 connected to CS 2
+EV 150 connected to CS 2
+EV 338 connected to CS 2
+EV 322 connected to CS 2
+EV 31 connected to CS 2
+EV 177 connected to CS 2
+EV 246 connected to CS 2
+EV 47 connected to CS 2
+EV 178 connected to CS 2
+EV 230 connected to CS 2
+EV 267 connected to CS 2
+EV 23 connected to CS 2
+EV 247 connected to CS 2
+EV 15 connected to CS 2
+EV 201 connected to CS 2
+EV 151 connected to CS 2
+EV 103 connected to CS 2
+EV 136 connected to CS 2
+EV 189 connected to CS 2
+EV 184 connected to CS 3
+EV 345 connected to CS 3
+EV 282 connected to CS 3
+EV 26 connected to CS 3
+EV 242 connected to CS 3
+EV 125 connected to CS 3
+EV 39 connected to CS 3
+EV 313 connected to CS 3
+EV 132 connected to CS 3
+EV 153 connected to CS 3
+EV 97 connected to CS 3
+EV 10 connected to CS 3
+EV 160 connected to CS 3
+EV 98 connected to CS 3
+EV 271 connected to CS 3
+EV 54 connected to CS 3
+EV 162 connected to CS 3
+EV 65 connected to CS 3
+EV 166 connected to CS 3
+EV 174 connected to CS 3
+EV 284 connected to CS 3
+EV 269 connected to CS 3
+EV 19 connected to CS 3
+EV 221 connected to CS 3
+EV 41 connected to CS 3
+EV 305 connected to CS 3
+EV 175 connected to CS 3
+EV 59 connected to CS 3
+EV 104 connected to CS 3
+EV 218 connected to CS 3
+EV 157 connected to CS 3
+EV 239 connected to CS 3
+EV 118 connected to CS 3
+EV 203 connected to CS 3
+EV 219 connected to CS 3
+EV 225 connected to CS 3
+EV 147 connected to CS 3
+EV 40 connected to CS 3
+EV 171 connected to CS 3
+EV 32 connected to CS 3
+EV 248 connected to CS 4
+EV 48 connected to CS 4
+EV 291 connected to CS 4
+EV 227 connected to CS 4
+EV 123 connected to CS 4
+EV 142 connected to CS 4
+EV 272 connected to CS 4
+EV 188 connected to CS 4
+EV 61 connected to CS 4
+EV 71 connected to CS 4
+EV 233 connected to CS 4
+EV 306 connected to CS 4
+EV 126 connected to CS 4
+EV 302 connected to CS 4
+EV 255 connected to CS 4
+EV 85 connected to CS 4
+EV 52 connected to CS 4
+EV 328 connected to CS 4
+EV 163 connected to CS 4
+EV 336 connected to CS 4
+EV 29 connected to CS 4
+EV 320 connected to CS 4
+EV 139 connected to CS 4
+EV 268 connected to CS 4
+EV 310 connected to CS 4
+EV 111 connected to CS 4
+EV 334 connected to CS 4
+EV 331 connected to CS 4
+EV 295 connected to CS 4
+EV 288 connected to CS 4
+EV 241 connected to CS 4
+EV 154 connected to CS 4
+EV 62 connected to CS 4
+EV 194 connected to CS 4
+EV 99 connected to CS 4
+EV 308 connected to CS 4
+EV 112 connected to CS 4
+EV 37 connected to CS 4
+EV 164 connected to CS 4
+EV 324 connected to CS 4
+EV 83 connected to CS 5
+EV 254 connected to CS 5
+EV 277 connected to CS 5
+EV 224 connected to CS 5
+EV 42 connected to CS 5
+EV 285 connected to CS 5
+EV 87 connected to CS 5
+EV 234 connected to CS 5
+EV 55 connected to CS 5
+EV 22 connected to CS 5
+EV 258 connected to CS 5
+EV 278 connected to CS 5
+EV 101 connected to CS 5
+EV 11 connected to CS 5
+EV 259 connected to CS 5
+EV 108 connected to CS 5
+EV 335 connected to CS 5
+EV 25 connected to CS 5
+EV 117 connected to CS 5
+EV 81 connected to CS 5
+EV 327 connected to CS 5
+EV 231 connected to CS 5
+EV 190 connected to CS 5
+EV 82 connected to CS 5
+EV 260 connected to CS 5
+EV 156 connected to CS 5
+EV 235 connected to CS 5
+EV 262 connected to CS 5
+EV 293 connected to CS 5
+EV 74 connected to CS 5
+EV 145 connected to CS 5
+EV 130 connected to CS 5
+EV 113 connected to CS 5
+EV 312 connected to CS 5
+EV 314 connected to CS 5
+EV 321 connected to CS 5
+EV 28 connected to CS 5
+EV 257 connected to CS 5
+EV 24 connected to CS 5
+EV 168 connected to CS 5
