@@ -1,4 +1,3 @@
-from json import loads
 import pandapower as pp
 import pandapower.networks as nw
 import pandapower.plotting as pplt
@@ -11,6 +10,7 @@ from pandapower.timeseries import OutputWriter
 from pandapower.timeseries.run_time_series import run_timeseries
 from pandapower.control import ConstControl
 import os
+import math
 
 ###############
 # This code is mainly based on https://github.com/e2nIEE/pandapower/blob/develop/tutorials/time_series.ipynb
@@ -21,9 +21,11 @@ def timeseries(file_dir, output_dir):
     net = nw.create_cigre_network_mv()
 
     # 1.1 add CS and load for the EVs
-    np.random.seed(200)
-    cs_positions = np.random.choice(15, 5, replace=False)
-    # Alternative: cs_positions = [1, 3, 7, 10, 13] simply giving the index of the buses
+    # np.random.seed(200)
+    # cs_positions = np.random.choice(15, 5, replace=False)
+    cs_positions = [8, 13, 5, 11, 3]
+    trafo_types = ["0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV"]
+    # "0.25 MVA 20/0.4 kV", "0.4 MVA 20/0.4 kV", "0.63 MVA 20/0.4 kV"
 
     # ev_profiles = pd.read_excel(os.path.join(file_dir, "PEV-Profiles-L2.xlsx"), sheet_name="PEV-Profiles-L2.csv", skiprows=2, nrows=2)
     # ev_profiles = pd.read_excel(os.path.join(file_dir, "profiles/ev_loads_one_day.xlsx"), skiprows=2)
@@ -34,21 +36,27 @@ def timeseries(file_dir, output_dir):
     # ev_idx = np.array([i[0] for i in ev_allocation])-1
     # allocation = np.array([i[1] for i in ev_allocation])
 
-    # Alternative using random allocation:
-    n_ev = 345
+    # Alternative using pseudo-random allocation:
+    # Set number of EVs overall and per CS
+    n_ev_per_cs = np.array([2,4,8,2,4])
+    n_ev = 20
+    assert n_ev == np.sum(n_ev_per_cs)
+    # Pick n_ev random profiles
+    np.random.seed(100)
     ev_idx = np.random.choice(348, n_ev, replace=False)
-    allocation = np.repeat(np.array(range(1,6)), n_ev//5)
+    # Allocate them according to n_ev_per_cs, this is an array of size n_ev (1:1 mapping of EV to CS) 
+    allocation = np.hstack((cs+1)*np.ones(n,dtype=np.int8) for cs, n in enumerate(n_ev_per_cs))
+    # allocation = np.repeat(np.array(range(1,6)), n_ev//5)
+    assert ev_idx.size == allocation.size
     ev_allocation = [(e,c) for e,c in zip(ev_idx,allocation)]
 
-    assert ev_idx.size == allocation.size
-
-    net, loadshape_cs = add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation)
+    net, loadshape_cs = add_cs_ev(net, cs_positions, trafo_types, ev_profiles, ev_idx, allocation)
     # Plot the updated network, including charging stations
     plot_network(net)
 
     # 2. create data source based on nominal loadshape
     n_timesteps = 24
-    profiles, ds = create_data_source(net, loadshape_cs)
+    loadshape_p_mw, loadshape_q_mvar, profiles, ds = create_data_source(net, loadshape_cs)
 
     # 3. create controllers
     create_controllers(net, ds)
@@ -64,9 +72,10 @@ def timeseries(file_dir, output_dir):
 
     # 6. Save additional results: plots, CS positions, n_EVs, EV allocation
     plot_results(net, time_steps)
-    save_configuration(cs_positions, ev_allocation, ev_idx, allocation)
+    hour = plot_peak_hour_network(net, loadshape_p_mw, loadshape_q_mvar)
+    save_configuration(cs_positions, ev_allocation, ev_idx, allocation, loadshape_cs, hour)
 
-def add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation):
+def add_cs_ev(net, cs_positions, trafo_types, ev_profiles, ev_idx, allocation):
     # loadshape_ev is a 24 x N_evs numpy array containing the load for all electric vehicles to be added
     loadshape_ev = np.zeros((24,len(ev_idx)))
     loadshape_cs = np.zeros((24,5))
@@ -79,7 +88,7 @@ def add_cs_ev(net, cs_positions, ev_profiles, ev_idx, allocation):
         name = "Bus CS "+str(i+1)
         name_2 = "CS "+str(i+1)
         pp.create_bus(net, name=name, vn_kv=0.4, type="b", geodata=(geodata))
-        pp.create_transformer(net, hv_bus=cs, lv_bus=pp.get_element_index(net, "bus", name), name=name_2, std_type="0.63 MVA 20/0.4 kV") # 0.4 MVA 20/0.4 kV, 0.63 MVA 20/0.4 kV
+        pp.create_transformer(net, hv_bus=cs, lv_bus=pp.get_element_index(net, "bus", name), name=name_2, std_type=trafo_types[i]) # 0.4 MVA 20/0.4 kV, 0.63 MVA 20/0.4 kV
         # Create a load at low voltage bus, load = number of connected evs * their max_load (this will be overwritten during the simulation)
         pp.create_load(net, bus=net.bus.iloc[-1].name, p_mw=6.6*np.size(np.where(allocation==i+1)), name="Load CS"+str(i+1))
     return net, loadshape_cs
@@ -135,7 +144,7 @@ def create_data_source(net, loadshape_cs):
         profiles[l["name"]+"_q_mvar"] = loadshape_q_mvar[:,id]
     ds = DFData(profiles)
 
-    return profiles, ds
+    return loadshape_p_mw, loadshape_q_mvar, profiles, ds
 
 def create_controllers(net, ds):
     for i, l in net.load.iterrows():
@@ -211,11 +220,38 @@ def plot_results(net, time_steps):
     plt.savefig("results/results.png", dpi=300)
     plt.show()
 
-def save_configuration(cs_positions, ev_allocation, ev_idx, allocation):
+def peak_hour(loadshape_p_mw, loadshape_q_mvar):
+    # Choose peak hour of the day
+    # First sum active and reactive power
+    loadshape = loadshape_p_mw + loadshape_q_mvar
+    i = np.argmax(np.sum(loadshape, axis=1))
+    print(i)
+    # Pick hour witht the single highest load
+    # i = math.floor(np.argmax(loadshape)/23)
+    return i
+
+def plot_peak_hour_network(net, loadshape_p_mw, loadshape_q_mvar):
+    # Choose peak hour
+    hour = peak_hour(loadshape_p_mw, loadshape_q_mvar)
+    # Set the loads accordingly
+    for l in net.load.index:
+        net.load.loc[l, "p_mw"] = loadshape_p_mw[hour, l]
+        net.load.loc[l, "q_mvar"] = loadshape_q_mvar[hour, l]
+    # Run power flow
+    pp.runpp(net)
+    #Plot results
+    fig = pplt.plotly.pf_res_plotly(net)
+    fig.write_image('results/network_colormap.png', scale=3) # width=600, height=350, 
+    return hour
+
+def save_configuration(cs_positions, ev_allocation, ev_idx, allocation, loadshape_cs, hour):
+    # Calculate the maximum number of simultaneously charging EVs per CS
+    n_parallel_charging = np.max(loadshape_cs, axis=0)/(6600/1e6)
     with open("results/cs_ev_configuration.txt", 'w') as f:
-        f.write(f"There were {ev_idx.size} EVs connected to the network.\n\n")
+        f.write(f"There were {ev_idx.size} EVs connected to the network.\nPeak hour was {hour}.\n\n")
+
         for i in range(5):
-            f.write(f"CS{i+1} was connected to high voltage bus {cs_positions[i]}.\n{np.count_nonzero(allocation==i+1)} EVs were connected to CS {i+1}.\n\n")
+            f.write(f"CS{i+1} was connected to high voltage bus {cs_positions[i]}.\n{np.count_nonzero(allocation==i+1)} EVs were connected to CS {i+1}.\nThe maximum number of EVs charged at the same time was {int(n_parallel_charging[i])}.\n\n")
         f.write("\nDetailed allocation:\n")
         # TODO sort this after CS
         for a in ev_allocation:
