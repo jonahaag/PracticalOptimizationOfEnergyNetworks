@@ -1,3 +1,4 @@
+from xml.etree.ElementTree import TreeBuilder
 import pandapower as pp
 import pandapower.networks as nw
 import pandapower.plotting as pplt
@@ -23,23 +24,25 @@ def timeseries(file_dir, output_dir):
     # 1.1 add CS and load for the EVs
     # np.random.seed(200)
     # cs_positions = np.random.choice(15, 5, replace=False)
-    cs_positions = [2, 6, 8, 11, 13]
-    trafo_types = ["0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV","0.63 MVA 20/0.4 kV"]
+    cs_positions = [2, 5, 7, 10, 13]
+    trafo_types = ["0.25 MVA 20/0.4 kV","0.25 MVA 20/0.4 kV","0.25 MVA 20/0.4 kV","0.25 MVA 20/0.4 kV","0.4 MVA 20/0.4 kV"]
     # "0.25 MVA 20/0.4 kV", "0.4 MVA 20/0.4 kV", "0.63 MVA 20/0.4 kV"
 
     # Load the EV charging profiles
     ev_profiles = np.loadtxt(os.path.join(file_dir, "profiles/peak_day.txt"))
 
     # In N-1 case:
-    contigency = True
+    contigency = False
     if contigency:
-        l = 0 #10
+        l = 10
         # Remove line
         net.line.loc[l, "in_service"] = False
         # Close all switches
         net.switch.loc[4, "closed"] = True
         net.switch.loc[1, "closed"] = True
         net.switch.loc[2, "closed"] = True
+    net.line.parallel.loc[0]=2
+    net.line.parallel.loc[1]=2
     
     # Alternative 1: anual allocation
     # each tuple is (ev_idx, cs_idx) where ev_idx is in range(1,348), cs_idx in range (1,5)
@@ -49,8 +52,8 @@ def timeseries(file_dir, output_dir):
 
     # Alternative 2: using pseudo-random allocation
     # Set number of EVs overall and per CS
-    n_ev_per_cs = np.array([154,154,154,154,154])
-    n_ev = 770
+    n_ev_per_cs = np.array([58,86,115,86,201])
+    n_ev = 546
     assert n_ev == np.sum(n_ev_per_cs)
     # Pick n_ev random profiles
     np.random.seed(100)
