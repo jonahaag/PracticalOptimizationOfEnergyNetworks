@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sb
 
 
-def plot_load_duration_curve(df):
+def plot_load_duration_lineplot(df):
     # Sort loads
     df['interval'] = 1
     df_load_sorted = df.sort_values(by=['Load'], ascending = False)
@@ -11,7 +11,6 @@ def plot_load_duration_curve(df):
     df_load_sorted['percentage'] = df_load_sorted['duration']*100/8759
     fig, ax = plt.subplots()
     sb.lineplot(x = "percentage", y = "Load", data = df_load_sorted, color="black")
-
     # Sort one source at a time
     df_sorted_last = df
     df_sorted_last["percentage"] = 0
@@ -31,9 +30,11 @@ def plot_load_duration_curve(df):
     ax.set_title("Load-Duration Curve")
     ax.set_xlabel("Time (%)")
     ax.set_ylabel("Load (MW)")
+    plt.savefig("lineplot.png")
     plt.show()
+    
 
-def plot_load_duration(df):
+def plot_load_duration_stackplot(df):
     # Sort loads
     df['interval'] = 1
     df_load_sorted = df.sort_values(by=['Load'], ascending = False)
@@ -47,13 +48,24 @@ def plot_load_duration(df):
     y6 = "HOB_Output_Backup[Dim 1][MW]"
     y7 = "HOB_Load_Output_A2[Dim 1][MW]"
     fig, ax = plt.subplots()
-    plt.stackplot(df_load_sorted["percentage"], df.sort_values(by=[y1], ascending = False)[y1], df.sort_values(by=[y2], ascending = False)[y2], df.sort_values(by=[y3], ascending = False)[y3], df.sort_values(by=[y4], ascending = False)[y4], df.sort_values(by=[y5], ascending = False)[y5], df.sort_values(by=[y6], ascending = False)[y6], df.sort_values(by=[y7], ascending = False)[y7])
+    plt.stackplot(df_load_sorted["percentage"], 
+                df.sort_values(by=[y1], ascending = False)[y1],
+                df.sort_values(by=[y2], ascending = False)[y2],
+                df.sort_values(by=[y3], ascending = False)[y3],
+                df.sort_values(by=[y4], ascending = False)[y4],
+                df.sort_values(by=[y5], ascending = False)[y5],
+                df.sort_values(by=[y6], ascending = False)[y6],
+                df.sort_values(by=[y7], ascending = False)[y7],
+                labels=['Waste', 'Wood', 'HP1', 'HP2', 'Pellet', 'HOB1', 'HOB2'])
     plt.ylim(0, None)
     plt.xlim(0, None)
     ax.set_title("Load-Duration Curve")
     ax.set_xlabel("Time (%)")
     ax.set_ylabel("Load (MW)")
+    plt.legend(loc='upper right')
+    plt.savefig("stackplot.png")
     plt.show()
+    
 
 # def create_subplots():
 #     plot_fuel_input_to_boiler()
@@ -68,6 +80,6 @@ if __name__ == "__main__":
     df["Load"] = load_df
 
     # Plot load duration curve
-    plot_load_duration(df)
-    # plot_load_duration_curve(df)
+    plot_load_duration_stackplot(df)
+    plot_load_duration_lineplot(df)
  
