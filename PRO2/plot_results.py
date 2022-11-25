@@ -2,8 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
 
-
-def plot_load_duration_lineplot(df):
+def plot_load_duration_lineplot(df, save=False):
     # Sort loads
     df['interval'] = 1
     df_load_sorted = df.sort_values(by=['Load'], ascending = False)
@@ -30,11 +29,11 @@ def plot_load_duration_lineplot(df):
     ax.set_title("Load-Duration Curve")
     ax.set_xlabel("Time (%)")
     ax.set_ylabel("Load (MW)")
-    plt.savefig("lineplot.png")
+    if save:
+        plt.savefig("lineplot.png")
     plt.show()
     
-
-def plot_load_duration_stackplot(df):
+def plot_load_duration_stackplot(df, save=False):
     # Sort loads
     df['interval'] = 1
     df_load_sorted = df.sort_values(by=['Load'], ascending = False)
@@ -63,16 +62,27 @@ def plot_load_duration_stackplot(df):
     ax.set_xlabel("Time (%)")
     ax.set_ylabel("Load (MW)")
     plt.legend(loc='upper right')
-    plt.savefig("stackplot.png")
+    if save:
+        plt.savefig("stackplot.png")
     plt.show()
     
+def plot_fuel_input_to_boiler(df):
+    return None
 
-# def create_subplots():
-#     plot_fuel_input_to_boiler()
-#     plot_dh_by_fuel()
-#     plot_fuel_cost()
-#     plot_electricity_production_by_fuel()
+def plot_dh_by_fuel(df):
+    return None
 
+def plot_fuel_cost(df):
+    return None
+
+def plot_electricity_production_by_fuel(df):
+    return None    
+
+def create_subplots(df):
+    plot_fuel_input_to_boiler(df)
+    plot_dh_by_fuel(df)
+    plot_fuel_cost(df)
+    plot_electricity_production_by_fuel(df)
 
 if __name__ == "__main__":
     df = pd.read_csv("bofit_results/results.csv")
@@ -80,6 +90,12 @@ if __name__ == "__main__":
     df["Load"] = load_df
 
     # Plot load duration curve
-    plot_load_duration_stackplot(df)
-    plot_load_duration_lineplot(df)
- 
+    plot_load_duration_stackplot(df, save=True)
+    plot_load_duration_lineplot(df, save=True)
+
+    # Plot special days
+    for day_id in [59, 198, 333, 95]: # max load, min load, max elec. price, min elec. price
+        # TODO
+        # Select data from that day
+        # Create a plot of subplots
+        create_subplots(df)
