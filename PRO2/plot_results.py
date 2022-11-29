@@ -167,6 +167,7 @@ def plot_fuel_cost(df, axes):
 
 def create_subplots(df, day_label, save, show):
     fig, axes = plt.subplots(2, 2)
+    plt.rc('legend', fontsize="x-small")
     axes = plot_fuel_input_to_boiler(df, axes)
     axes = plot_dh_by_fuel(df, axes)
     axes = plot_electricity_production_by_fuel(df, axes)
@@ -175,7 +176,6 @@ def create_subplots(df, day_label, save, show):
     # lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
     # fig.legend(lines[0:5], labels[0:5])
     fig.suptitle(f"Results for {df[df.columns[0]].iloc[0][0:10]} ("+day_label+")", fontsize=20)
-    # plt.rc('legend', fontsize="x-small")
     plt.tight_layout()
     if save:
         fig.set_size_inches((11,7), forward=False)
@@ -183,10 +183,8 @@ def create_subplots(df, day_label, save, show):
     if show:
         plt.show()
 
-if __name__ == "__main__":
-    show = False
-    save = True
-    df = pd.read_csv("bofit_results/results.csv")
+def plot(df, show=False, save=False):
+    # df = pd.read_csv("bofit_results/results.csv")
     load_df = df["Thermal_Output_A1[Dim 1][MW]"] + df["Thermal_Output_A2[Dim 1][MW]"]
     df["Load"] = load_df
     prices_df = pd.read_csv("electricity_prices.csv", decimal=",", sep=";", index_col=0)
