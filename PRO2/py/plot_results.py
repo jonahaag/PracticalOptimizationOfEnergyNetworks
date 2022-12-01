@@ -1,7 +1,5 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import seaborn as sb
 import os
 
 color_map = ["#d3bcaf", "#ffd14f", "#417505", "#9fb7c9", "#5e5e5e", "#B33F40"]
@@ -12,7 +10,7 @@ def plot_load_duration_stackplot(df, plots_folder, save, show):
     df['interval'] = 1
     df_load_sorted = df.sort_values(by=['Total Load'], ascending = False)
     df_load_sorted['duration'] = df_load_sorted['interval'].cumsum()
-    df_load_sorted['percentage'] = df_load_sorted['duration']*100/8759
+    df_load_sorted['percentage'] = df_load_sorted['duration']*100/8760
     y1 = "Waste_CHP_Load_Output_A1[Dim 1][MW]"
     y2 = "Wood_CHP_Load_Output_A1[Dim 1][MW]"
     y3 = "Pellet_CHP_Load_Output_A2[Dim 1][MW]"
@@ -59,7 +57,6 @@ def plot_fuel_input_to_boiler(df, axes):
     axes[0,0].set_title("Fuel input to boiler")
     axes[0,0].set_xlabel("Time [h]")
     axes[0,0].set_ylabel("Fuel Input [MW]")
-    # axes[0,0].legend(loc='lower right')
     return axes
 
 def plot_dh_by_fuel(df, axes):
@@ -83,7 +80,6 @@ def plot_dh_by_fuel(df, axes):
     axes[0,1].set_title("DH Supply by fuel")
     axes[0,1].set_xlabel("Time [h]")
     axes[0,1].set_ylabel("DH Supply [MW]")
-    # axes[0,1].legend(loc='lower right')
     return axes
 
 def plot_electricity_production_by_fuel(df, axes):
@@ -95,15 +91,13 @@ def plot_electricity_production_by_fuel(df, axes):
     axes[1,0].bar(df["Date (CEST)"], df[y1], width, label=labels[0], color=color_map[0])
     axes[1,0].bar(df["Date (CEST)"], df[y2], width, bottom=df[y1], label=labels[1], color=color_map[1])
     axes[1,0].bar(df["Date (CEST)"], df[y3], width, bottom=df[y1]+df[y2], label=labels[2], color=color_map[2])
-
     axes[1,0].xaxis.set_major_locator(ticker.MultipleLocator(2))
     axes[1,0].xaxis.set_major_formatter(ticker.ScalarFormatter())
     axes[1,0].set_xlim([-0.5,23.5])
-    axes[1,0].set_ylim([0,None])
+    axes[1,0].set_ylim([0,(df[y1]+df[y2]+df[y3]).max()*1.1])
     axes[1,0].set_title("Electricity production by fuel")
     axes[1,0].set_xlabel("Time [h]")
     axes[1,0].set_ylabel("Electricity supply [MW]")
-    # axes[1,0].legend(loc='lower right')
     return axes
 
 def plot_fuel_cost(df, axes, electricity_price):
@@ -128,11 +122,9 @@ def plot_fuel_cost(df, axes, electricity_price):
     axes[1,1].set_title("Fuel cost")
     axes[1,1].set_xlabel("Time [h]")
     axes[1,1].set_ylabel("Costs [SEK]")
-    # axes[1,1].legend(loc='lower right')
     return axes
 
 def create_subplots(df, electricity_price, plots_folder, save, show):
-
     fig, axes = plt.subplots(2, 2)
     # plt.rc('legend', fontsize="x-small")
     axes = plot_fuel_input_to_boiler(df, axes)
@@ -186,14 +178,20 @@ def plot_cost_revenue(df, electricity_price, plots_folder, save, show):
     if show:
         plt.show()
 
+def plot_prices(df, electricity_price, plots_folder, save, show):
+    fig, ax = plt.subplots()
+    ax.plot(df["Time (CEST)"])
+    if save:
+        plt.savefig(os.path.join(plots_folder,f"costs_{df[df.columns[0]].iloc[0][0:10]}.png"), dpi=300)
+    if show:
+        plt.show()
+
 def plot(df, electricity_price, show, save):
     plots_folder = "plots_" + electricity_price
     if not os.path.exists(plots_folder):
             os.makedirs(plots_folder)
-    # df = pd.read_csv("bofit_results/results.csv")
     # Plot load duration curve
     plot_load_duration_stackplot(df, plots_folder, save, show)
-    # plot_load_duration_lineplot(df, save=save, show=show)
 
     # Plot special days
     day_start_ids = [1392, 4727, 7968, 2255]

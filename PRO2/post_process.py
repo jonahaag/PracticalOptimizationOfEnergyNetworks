@@ -1,5 +1,6 @@
-import extend_result_csv as extend
-import plot_results as plot
+import py.extend_result_csv as extend
+import py.plot_results as plot
+import os
 
 if __name__ == "__main__":
 
@@ -9,12 +10,11 @@ if __name__ == "__main__":
 
     electricity_price = "0"   # 0: normal price, P25: higher price, M25: lower price
     if electricity_price == "0":
-        result_file = "Scenario_Step1_consolidated.csv"
+        result_file = os.path.join("bofit_results","Scenario_Step1_consolidated.csv")
     elif electricity_price == "P25":
-        result_file = "Scenario_Step2_P25_consolidated.csv"
+        result_file = os.path.join("bofit_results","Scenario_Step2_P25_consolidated.csv")
     elif electricity_price == "M25":
-        result_file = "Scenario_Step2_M25_consolidated.csv"
-    else:
+        result_file = os.path.join("bofit_results","Scenario_Step2_M25_consolidated.csv")
         
     df = extend.extend(result_file, save=save_merged_results)    
     plot.plot(df, electricity_price, show=show_plots, save=save_plots)
