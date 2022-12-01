@@ -156,42 +156,94 @@ def plot_cost_revenue(df, electricity_price, plots_folder, save, show):
     wood_revenue = df["Wood_CHP_Electricity_Output_A1[Dim 1][MW]"].multiply(df[spot_label]).sum()
     pellet_revenue = df["Pellet_CHP_Electricity_Output_A2[Dim 1][MW]"].multiply(df[spot_label]).sum()
     dh_revenue = df["Total Load"].multiply(df["DH Price"]).sum()
-    
+
     width = .8
     fig, ax = plt.subplots()
 
     bottom = 0
-    for i, cost in enumerate([waste_cost, wood_cost, pellet_cost, electricity_cost, oil_cost]):
+    # for i, cost in enumerate([waste_cost, wood_cost, pellet_cost, electricity_cost, oil_cost]):
+    costs = sorted(list(zip([waste_cost, wood_cost, pellet_cost, electricity_cost, oil_cost],range(5))),reverse=True)
+    for cost, i in costs:
         ax.bar("Cost", cost, width=width, bottom=bottom, label=labels[i], color=color_map[i])
         bottom += cost
     
     bottom = 0
-    for i, revenue in enumerate([waste_revenue, wood_revenue, pellet_revenue, dh_revenue]):
+    # for i, revenue in enumerate([waste_revenue, wood_revenue, pellet_revenue, dh_revenue]):
+    revenues = sorted(list(zip([waste_revenue, wood_revenue, pellet_revenue, dh_revenue],range(4))),reverse=True)
+    for revenue, i in revenues:
         ax.bar("Revenue", revenue, width=width, bottom=bottom, label=labels[5] if i == 3 else "", color=color_map[5] if i ==3 else color_map[i])
         bottom += revenue
 
     # ax.set_xlabel("Time [%]")
     ax.set_ylabel("Money [SEK]")
-    ax.legend(loc='upper left') #TODO fix double legend entries
+    ax.legend(loc='upper left')
     if save:
         plt.savefig(os.path.join(plots_folder,f"costs_{df[df.columns[0]].iloc[0][0:10]}.png"), dpi=300)
     if show:
         plt.show()
 
 def plot_prices(df, electricity_price, plots_folder, save, show):
-    fig, ax = plt.subplots()
-    ax.plot(df["Time (CEST)"])
+    plt.subplot(111)
+    for i, price in enumerate(["Waste Price", "Wood Price", "Bio Pellet Price", "Retail Price " + electricity_price, "Bio Oil Price", "Spot Price " + electricity_price]):
+        plt.plot(df["Date (CEST)"], df[price], label=price, color=color_map[i])
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.set_xlim([0,23])
+    ax.set_ylim([0,None])
+    ax.set_xlabel("Time [h]")
+    ax.set_ylabel("Price [SEK/kWh]")
+    plt.legend(bbox_to_anchor=(0, 1, 1, 0), loc="lower left", ncol=3)
     if save:
-        plt.savefig(os.path.join(plots_folder,f"costs_{df[df.columns[0]].iloc[0][0:10]}.png"), dpi=300)
+        plt.savefig(os.path.join(plots_folder,f"prices_{df[df.columns[0]].iloc[0][0:10]}.png"), dpi=300)
     if show:
         plt.show()
 
-def plot(df, electricity_price, show, save):
+def plot_chp_use(df, plots_folder, save, show):
+    y = ["Waste_Turbine_Load_A1[Dim 1][MW]", "Wood_Turbine_Load_A1[Dim 1][MW]", "Pellet_Turbine_Load_A2[Dim 1][MW]",
+        "Waste_BP_Load_A1[Dim 1][MW]", "Wood_BP_Load_A1[Dim 1][MW]", "Pellet_BP_Load_A2[Dim 1][MW]"]
+    fig, axes = plt.subplots(3,1)
+    plt.rc('legend', fontsize="x-small")
+    for i in range(3):
+        axes[i].plot(df["Date (CEST)"], df[y[i]], label=labels[i]+" Turbine", color=color_map[i])
+        axes[i].plot(df["Date (CEST)"], df[y[i+3]], label=labels[i]+" BP", color=color_map[i+3], alpha=0.5)
+        axes[i].xaxis.set_major_locator(ticker.MultipleLocator(2400))
+        axes[i].xaxis.set_major_formatter(ticker.ScalarFormatter())
+        axes[i].set_xlim([-0.5,8760.5])
+        axes[i].set_ylim([0,None])
+        axes[i].set_xlabel("Time [h]")
+        axes[i].set_ylabel("Load [MW]")
+        axes[i].legend(loc='best')
+    plt.tight_layout()
+    if save:
+        plt.savefig(os.path.join(plots_folder,"chp_use.png"), dpi=300)
+    if show:
+        plt.show()
+
+def plot_chp_use_bar(df, plots_folder, save, show):
+    fig, ax = plt.subplots()
+    width = 0.8
+    ax.bar("Waste", df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="Turbine", color=color_map[0])
+    ax.bar("Waste", df["Waste_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="BP", color=color_map[1])
+    ax.bar("Wood", df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color=color_map[0])
+    ax.bar("Wood", df["Wood_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color=color_map[1])
+    ax.bar("Bio Pellet", df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color=color_map[0])
+    ax.bar("Bio Pellet", df["Pellet_BP_Load_A2[Dim 1][MW]"].sum(), bottom=df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color=color_map[1])
+    ax.legend(loc='best')
+    ax.set_ylabel("Load [MW]")
+    if save:
+        plt.savefig(os.path.join(plots_folder,"chp_use_bar.png"), dpi=300)
+    if show:
+        plt.show()
+
+def plot(df, electricity_price, save, show):
     plots_folder = "plots_" + electricity_price
     if not os.path.exists(plots_folder):
             os.makedirs(plots_folder)
     # Plot load duration curve
     plot_load_duration_stackplot(df, plots_folder, save, show)
+    plot_chp_use(df, plots_folder, save, show)
+    plot_chp_use_bar(df, plots_folder, save, show)
 
     # Plot special days
     day_start_ids = [1392, 4727, 7968, 2255]
@@ -202,3 +254,4 @@ def plot(df, electricity_price, show, save):
         # Create a plot of subplots
         create_subplots(df_day, electricity_price, plots_folder, save, show)
         plot_cost_revenue(df_day, electricity_price, plots_folder, save, show)
+        plot_prices(df_day, electricity_price, plots_folder, save, show)

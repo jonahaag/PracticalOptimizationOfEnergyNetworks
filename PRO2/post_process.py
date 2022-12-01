@@ -8,7 +8,7 @@ if __name__ == "__main__":
     show_plots = False
     save_plots = True
 
-    electricity_price = "0"   # 0: normal price, P25: higher price, M25: lower price
+    electricity_price = "M25"   # 0: normal price, P25: higher price, M25: lower price
     if electricity_price == "0":
         result_file = os.path.join("bofit_results","Scenario_Step1_consolidated.csv")
     elif electricity_price == "P25":
@@ -16,5 +16,5 @@ if __name__ == "__main__":
     elif electricity_price == "M25":
         result_file = os.path.join("bofit_results","Scenario_Step2_M25_consolidated.csv")
         
-    df = extend.extend(result_file, save=save_merged_results)    
-    plot.plot(df, electricity_price, show=show_plots, save=save_plots)
+    df = extend.extend(result_file, save_merged_results)    
+    plot.plot(df, electricity_price, save_plots, show_plots)
