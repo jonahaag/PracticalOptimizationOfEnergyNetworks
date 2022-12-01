@@ -16,7 +16,7 @@ def extend(file, save=True):
     return df
 
 def add_prices(df):
-    prices_df = pd.read_csv("prices.csv", decimal=",", sep=";", index_col=0)
+    prices_df = pd.read_csv("docs/prices.csv", decimal=",", sep=";", index_col=0)
     for column in prices_df.columns:
         df = df.join(prices_df[column])
     return df
