@@ -42,8 +42,8 @@ def extend_step3_case2(file, save=True):
     df["Bio Oil Fuel Input [MW]"] = df["HOB_Fuel_Input_A1[Dim 1][MW]"] + df["HOB_Fuel_Input_A2[Dim 1][MW]"]
     df["HP Load Output [MW]"] = df["HP_Load_Output_A1[Dim 1][MW]"] + df["HP_Load_Output_A2[Dim 1][MW]"]
     df["Bio Oil Load Output [MW]"] = df["HOB_Output_Backup[Dim 1][MW]"] + df["HOB_Load_Output_A2[Dim 1][MW]"]
-    # df["Accumulator Storage Change"] = df["Accumulator_Input2[Dim 1][MW]"] - df["Accumulator_Output[Dim 1][MW]"]
-    df["Accumulator Storage Change"] = - df["Accumulator_Output[Dim 1][MW]"]
+    df["Accumulator Storage Change"] = df["Accumulator_Input2[Dim 1][MW]"] - df["Accumulator_Output[Dim 1][MW]"]
+    # df["Accumulator Storage Change"] = - df["Accumulator_Output[Dim 1][MW]"]
     # assert df.shape[1] == 43
     # assert df.shape[0] == 8760
     print(df.shape)

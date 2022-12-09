@@ -6,7 +6,7 @@ color_map = ["#d3bcaf", "#ffd14f", "#417505", "#9fb7c9", "#5e5e5e", "#B33F40"]
 labels = ['Waste', 'Wood', 'Bio Pellet', 'Electricity', 'Bio Oil', 'DH']
 
 color_accumulator = ["#b4a7d6"]
-label_accumulator = ["Accumulator"]
+label_accumulator = ["Accumulator Unloading"]
   
 def plot_load_duration_stackplot(df, plots_folder, save):
     # Sort loads
@@ -120,6 +120,39 @@ def plot_dh_by_fuel(df, ax, title):
     ax.set_xlabel("Time [h]")
     ax.set_ylabel("DH Supply [MW]")
 
+def plot_dh_by_fuel2(df, ax, title):
+    y0 = "Accumulator Storage Change"
+    y1 = "Waste_CHP_Load_Output_A1[Dim 1][MW]"
+    y2 = "Wood_CHP_Load_Output_A1[Dim 1][MW]"
+    y3 = "Pellet_CHP_Load_Output_A2[Dim 1][MW]"
+    y4 = "HP Load Output [MW]"
+    y5 = "Bio Oil Load Output [MW]"
+    
+    ax.stackplot(df["Date (CEST)"], 
+                -df["Accumulator_Input2[Dim 1][MW]"],
+                labels=["Accumulator Loading"],
+                colors=["#7d7495"])
+    ax.stackplot(df["Date (CEST)"],
+                df[y1],
+                df[y2],
+                df[y3],
+                df[y4],
+                df[y5], 
+                df["Accumulator_Output[Dim 1][MW]"],
+                labels=labels[0:5]+label_accumulator,
+                colors=color_map[0:5]+color_accumulator)
+    ax.plot(df["Date (CEST)"],
+            df["Total Load"],
+            label=labels[5],
+            color=color_map[5])
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.set_xlim([0,23])
+    ax.set_ylim([-100,None])
+    ax.set_title(title)
+    ax.set_xlabel("Time [h]")
+    ax.set_ylabel("DH Supply [MW]")
+
 def plot_electricity_production_by_fuel(df, ax, title):
     y1 = "Waste_CHP_Electricity_Output_A1[Dim 1][MW]"
     y2 = "Wood_CHP_Electricity_Output_A1[Dim 1][MW]"
@@ -190,8 +223,8 @@ def plot_subplots(df, electricity_price, plots_folder, save):
         plot_fuel_input(df_day, axes[i][0,0], title="Fuel input to boiler")
         plot_fuel_input(df_day, axes[4][j,k], title=day_string)
 
-        plot_dh_by_fuel(df_day, axes[i][0,1], title="DH Supply by fuel")
-        plot_dh_by_fuel(df_day, axes[5][j,k], title=day_string)
+        plot_dh_by_fuel2(df_day, axes[i][0,1], title="DH Supply by fuel")
+        plot_dh_by_fuel2(df_day, axes[5][j,k], title=day_string)
 
         plot_electricity_production_by_fuel(df_day, axes[i][1,0], title="Electricity production by fuel")
         plot_electricity_production_by_fuel(df_day, axes[6][j,k], title=day_string)
@@ -201,7 +234,7 @@ def plot_subplots(df, electricity_price, plots_folder, save):
 
         lines_labels = [ax.get_legend_handles_labels() for ax in figs[i].axes]
         lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-        figs[i].legend(lines[0:7], labels[0:7], ncol=7, loc='center')
+        figs[i].legend(lines[0:8], labels[0:8], ncol=8, loc='center')
         figs[i].tight_layout()
         if save:
             figs[i].set_size_inches((11,7), forward=False)
@@ -214,7 +247,7 @@ def plot_subplots(df, electricity_price, plots_folder, save):
         lines_labels = [ax.get_legend_handles_labels() for ax in figs[i+4].axes]
         lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
         if i == 1:
-            figs[i+4].legend(lines[0:7], labels[0:7], ncol=7, loc='center')
+            figs[i+4].legend(lines[0:8], labels[0:8], ncol=8, loc='center')
         elif i == 2:
             figs[i+4].legend(lines[0:3], labels[0:3], ncol=3, loc='center')
         else:
