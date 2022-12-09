@@ -56,12 +56,12 @@ def plot_chp_use(df, plots_folder, save):
 def plot_chp_use_bar(df, plots_folder, save):
     fig, ax = plt.subplots()
     width = 0.8
-    ax.bar("Waste", df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="Turbine", color=color_map[0])
-    ax.bar("Waste", df["Waste_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="BP", color=color_map[1])
-    ax.bar("Wood", df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color=color_map[0])
-    ax.bar("Wood", df["Wood_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color=color_map[1])
-    ax.bar("Bio Pellet", df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color=color_map[0])
-    ax.bar("Bio Pellet", df["Pellet_BP_Load_A2[Dim 1][MW]"].sum(), bottom=df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color=color_map[1])
+    ax.bar("Waste", df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="Turbine", color="#e69138")
+    ax.bar("Waste", df["Waste_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Waste_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, label="BP", color="#3d85c6")
+    ax.bar("Wood", df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color="#e69138")
+    ax.bar("Wood", df["Wood_BP_Load_A1[Dim 1][MW]"].sum(), bottom=df["Wood_Turbine_Load_A1[Dim 1][MW]"].sum(), width=width, color="#3d85c6")
+    ax.bar("Bio Pellet", df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color="#e69138")
+    ax.bar("Bio Pellet", df["Pellet_BP_Load_A2[Dim 1][MW]"].sum(), bottom=df["Pellet_Turbine_Load_A2[Dim 1][MW]"].sum(), width=width, color="#3d85c6")
     ax.legend(loc='best')
     ax.set_ylabel("Load [MW]")
     if save:
@@ -71,8 +71,8 @@ def plot_fuel_input(df, ax, title):
     y1 = "Waste_Fuel_Input_A1[Dim 1][MW]"
     y2 = "Wood_Fuel_Input_A1[Dim 1][MW]"
     y3 = "Pellet_Fuel_Input_A2[Dim 1][MW]"
-    y4 = "HP Load Output [MW]"
-    y5 = "Bio Oil Load Output [MW]"
+    y4 = "HP Electricity Consumption [MW]"
+    y5 = "Bio Oil Fuel Input [MW]"
     ax.stackplot(df["Date (CEST)"], 
                 df[y1],
                 df[y2],
@@ -103,6 +103,10 @@ def plot_dh_by_fuel(df, ax, title):
                 df[y5],
                 labels=labels,
                 colors=color_map)
+    ax.plot(df["Date (CEST)"],
+            df["Total Load"],
+            label=labels[5],
+            color=color_map[5])
     ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set_xlim([0,23])
@@ -192,7 +196,7 @@ def plot_subplots(df, electricity_price, plots_folder, save):
 
         lines_labels = [ax.get_legend_handles_labels() for ax in figs[i].axes]
         lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-        figs[i].legend(lines[0:5], labels[0:5], ncol=5, loc='center')
+        figs[i].legend(lines[0:6], labels[0:5]+["Demand"], ncol=6, loc='center')
         figs[i].tight_layout()
         if save:
             figs[i].set_size_inches((11,7), forward=False)
@@ -204,7 +208,9 @@ def plot_subplots(df, electricity_price, plots_folder, save):
     for i, result_type in enumerate(["fuel_input", "dh_by_fuel", "electricity_production", "fuel_cost"]):
         lines_labels = [ax.get_legend_handles_labels() for ax in figs[i+4].axes]
         lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-        if i == 2:
+        if i == 1:
+            figs[i+4].legend(lines[0:6], ["Demand"]+labels[1:6], ncol=6, loc='center')
+        elif i == 2:
             figs[i+4].legend(lines[0:3], labels[0:3], ncol=3, loc='center')
         else:
             figs[i+4].legend(lines[0:5], labels[0:5], ncol=5, loc='center')
@@ -272,13 +278,12 @@ def create_plots(df, electricity_price, save, show):
     plots_folder = "plots_" + electricity_price
     if not os.path.exists(plots_folder):
             os.makedirs(plots_folder)
-    # Plot load duration curve
-    plot_load_duration_stackplot(df, plots_folder, save)
 
+    plot_load_duration_stackplot(df, plots_folder, save)
     plot_chp_use(df, plots_folder, save)
     plot_chp_use_bar(df, plots_folder, save)
-
     plot_subplots(df, electricity_price, plots_folder, save)
+
     if show:
         #TODO this is a bit messed up
         plt.show()
