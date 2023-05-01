@@ -37,6 +37,22 @@ def plot_load_duration_stackplot(df, plots_folder, save):
     if save:
         plt.savefig(os.path.join(plots_folder, "load_duration_stackplot.png"), dpi=300)
 
+def plot_accumulator_use(df, plots_folder, save):
+    fig, axes = plt.subplots(1,1)
+    # plt.rc('legend', fontsize="x-small")
+    axes.bar(df["Date (CEST)"], df["Accumulator_Output[Dim 1][MW]"], width=5, label=label_accumulator[0], color=color_accumulator[0])
+    axes.xaxis.set_major_locator(ticker.MultipleLocator(2400))
+    axes.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    axes.set_xlim([-0.5,8760.5])
+    axes.set_ylim([0,None])
+    axes.set_xlabel("Time [h]")
+    axes.set_ylabel("Load [MW]")
+    axes.set_title("Accumulator Output")
+    # axes.legend(loc='best')
+    # plt.tight_layout()
+    if save:
+        plt.savefig(os.path.join(plots_folder,"accumulator_use.png"), dpi=300)
+
 def plot_chp_use(df, plots_folder, save):
     y = ["Waste_Turbine_Load_A1[Dim 1][MW]", "Wood_Turbine_Load_A1[Dim 1][MW]", "Pellet_Turbine_Load_A2[Dim 1][MW]",
         "Waste_BP_Load_A1[Dim 1][MW]", "Wood_BP_Load_A1[Dim 1][MW]", "Pellet_BP_Load_A2[Dim 1][MW]"]
@@ -273,6 +289,10 @@ def plot_cost_revenue(df, electricity_price, plots_folder, save):
     pellet_revenue = df["Pellet_CHP_Electricity_Output_A2[Dim 1][MW]"].multiply(df[spot_label]).sum()
     electricity_revenue = waste_revenue + wood_revenue + pellet_revenue
     dh_revenue = df["Total Load"].multiply(df["DH Price"]).sum()
+    print("Production cost: ", waste_cost+wood_cost+pellet_cost+electricity_cost+oil_cost)
+    print("Electricity revenue: ", electricity_revenue)
+    print("DH revenue: ", dh_revenue)
+    print("DH demand: ", df["Total Load"].sum())
 
     width = .8
     fig, ax = plt.subplots()
@@ -318,6 +338,7 @@ def create_plots(df, electricity_price, save, show, case=0):
             os.makedirs(plots_folder)
 
     plot_load_duration_stackplot(df, plots_folder, save)
+    plot_accumulator_use(df, plots_folder, save)
     plot_chp_use(df, plots_folder, save)
     plot_chp_use_bar(df, plots_folder, save)
     plot_subplots(df, electricity_price, plots_folder, save)

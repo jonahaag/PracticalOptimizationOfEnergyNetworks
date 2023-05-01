@@ -34,6 +34,84 @@ def plot_load_duration_stackplot(df, plots_folder, save):
     if save:
         plt.savefig(os.path.join(plots_folder, "load_duration_stackplot.png"), dpi=300)
 
+def plot_load_duration_area1(df, plots_folder, save):
+    # Sort loads
+    df['interval'] = 1
+    df_load_sorted = df.sort_values(by=['Demand Area 1'], ascending = False)
+    df_load_sorted['duration'] = df_load_sorted['interval'].cumsum()
+    df_load_sorted['percentage'] = df_load_sorted['duration']*100/8760
+    y1 = "Waste_CHP_Load_Output_A1[Dim 1][MW]"
+    y2 = "Wood_CHP_Load_Output_A1[Dim 1][MW]"
+    y4 = "HP_Load_Output_A1[Dim 1][MW]"
+    y5 = "HOB_Output_Backup[Dim 1][MW]"
+    fig, ax = plt.subplots()
+    plt.stackplot(df_load_sorted["percentage"], 
+                df.sort_values(by=[y1], ascending = False)[y1],
+                df.sort_values(by=[y2], ascending = False)[y2],
+                df.sort_values(by=[y4], ascending = False)[y4],
+                df.sort_values(by=[y5], ascending = False)[y5],
+                labels=[labels[0],labels[1],labels[3],labels[4]],
+                colors=[color_map[0],color_map[1],color_map[3],color_map[4]])
+    plt.ylim(0, None)
+    plt.xlim(0, None)
+    ax.set_title("Load-Duration Curve")
+    ax.set_xlabel("Time [%]")
+    ax.set_ylabel("Load [MW]")
+    plt.legend(loc='upper right')
+    if save:
+        plt.savefig(os.path.join(plots_folder, "load_duration_area1.png"), dpi=300)
+
+def plot_load_duration_area2(df, plots_folder, save):
+    # Sort loads
+    df['interval'] = 1
+    df_load_sorted = df.sort_values(by=['Demand Area 2'], ascending = False)
+    df_load_sorted['duration'] = df_load_sorted['interval'].cumsum()
+    df_load_sorted['percentage'] = df_load_sorted['duration']*100/8760
+    y3 = "Pellet_CHP_Load_Output_A2[Dim 1][MW]"
+    y4 = "HP_Load_Output_A2[Dim 1][MW]"
+    y5 = "HOB_Load_Output_A2[Dim 1][MW]"
+    fig, ax = plt.subplots()
+    plt.stackplot(df_load_sorted["percentage"],
+                df.sort_values(by=[y3], ascending = False)[y3],
+                df.sort_values(by=[y4], ascending = False)[y4],
+                df.sort_values(by=[y5], ascending = False)[y5],
+                labels=[labels[2],labels[3],labels[4]],
+                colors=[color_map[2],color_map[3],color_map[4]])
+    plt.ylim(0, None)
+    plt.xlim(0, None)
+    ax.set_title("Load-Duration Curve")
+    ax.set_xlabel("Time [%]")
+    ax.set_ylabel("Load [MW]")
+    plt.legend(loc='upper right')
+    if save:
+        plt.savefig(os.path.join(plots_folder, "load_duration_area2.png"), dpi=300)
+# def plot_load_duration_area2(df, plots_folder, save):
+#     # Sort loads
+#     df['interval'] = 1
+#     df_load_sorted = df.sort_values(by=['Demand Area 2'], ascending = False)
+#     df_load_sorted['duration'] = df_load_sorted['interval'].cumsum()
+#     df_load_sorted['percentage'] = df_load_sorted['duration']*100/8760
+#     y2 = "Area_Exchange[Dim 1][MW]"
+#     y3 = "Pellet_CHP_Load_Output_A2[Dim 1][MW]"
+#     y4 = "HP_Load_Output_A2[Dim 1][MW]"
+#     y5 = "HOB_Load_Output_A2[Dim 1][MW]"
+#     fig, ax = plt.subplots()
+#     plt.stackplot(df_load_sorted["percentage"],
+#                 df.sort_values(by=[y2], ascending = False)[y2],
+#                 df.sort_values(by=[y3], ascending = False)[y3],
+#                 df.sort_values(by=[y4], ascending = False)[y4],
+#                 df.sort_values(by=[y5], ascending = False)[y5],
+#                 labels=["Import from Area 1",labels[2],labels[3],labels[4]],
+#                 colors=["#3d85c6",color_map[2],color_map[3],color_map[4]])
+#     plt.ylim(0, None)
+#     plt.xlim(0, None)
+#     ax.set_title("Load-Duration Curve")
+#     ax.set_xlabel("Time [%]")
+#     ax.set_ylabel("Load [MW]")
+#     plt.legend(loc='upper right')
+#     if save:
+#         plt.savefig(os.path.join(plots_folder, "load_duration_area2.png"), dpi=300)
+
 def plot_chp_use(df, plots_folder, save):
     y = ["Waste_Turbine_Load_A1[Dim 1][MW]", "Wood_Turbine_Load_A1[Dim 1][MW]", "Pellet_Turbine_Load_A2[Dim 1][MW]",
         "Waste_BP_Load_A1[Dim 1][MW]", "Wood_BP_Load_A1[Dim 1][MW]", "Pellet_BP_Load_A2[Dim 1][MW]"]
@@ -235,6 +313,10 @@ def plot_cost_revenue(df, electricity_price, plots_folder, save):
     pellet_revenue = df["Pellet_CHP_Electricity_Output_A2[Dim 1][MW]"].multiply(df[spot_label]).sum()
     electricity_revenue = waste_revenue + wood_revenue + pellet_revenue
     dh_revenue = df["Total Load"].multiply(df["DH Price"]).sum()
+    print("Production cost: ", waste_cost+wood_cost+pellet_cost+electricity_cost+oil_cost)
+    print("Electricity revenue: ", electricity_revenue)
+    print("DH revenue: ", dh_revenue)
+    print("DH demand: ", df["Total Load"].sum())
 
     width = .8
     fig, ax = plt.subplots()
@@ -280,6 +362,8 @@ def create_plots(df, electricity_price, save, show):
             os.makedirs(plots_folder)
 
     plot_load_duration_stackplot(df, plots_folder, save)
+    plot_load_duration_area1(df, plots_folder, save)
+    plot_load_duration_area2(df, plots_folder, save)
     plot_chp_use(df, plots_folder, save)
     plot_chp_use_bar(df, plots_folder, save)
     plot_subplots(df, electricity_price, plots_folder, save)
